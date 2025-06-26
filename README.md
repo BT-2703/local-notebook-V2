@@ -48,6 +48,8 @@ Este proyecto está construido con una pila moderna y potente:
 
 ## Primeros Pasos
 
+### Instalación con Docker Compose
+
 La forma más sencilla de comenzar con HorusLM es usar Docker Compose:
 
 ```bash
@@ -55,12 +57,47 @@ La forma más sencilla de comenzar con HorusLM es usar Docker Compose:
 git clone https://github.com/tuusuario/horuslm.git
 cd horuslm
 
+# Copiar el archivo de variables de entorno
+cp .env.example .env
+
 # Iniciar los servicios
 docker-compose up -d
 
 # Acceder a la aplicación
 # Frontend: http://localhost:3000
 # Panel de administración: http://localhost:3000/admin
+```
+
+### Instalación para desarrollo
+
+Si prefieres ejecutar la aplicación en modo desarrollo:
+
+```bash
+# Clonar el repositorio
+git clone https://github.com/tuusuario/horuslm.git
+cd horuslm
+
+# Copiar el archivo de variables de entorno
+cp .env.example .env
+
+# Instalar dependencias del frontend
+npm install
+
+# Instalar dependencias del backend
+cd backend
+npm install
+cd ..
+
+# Iniciar la base de datos y Ollama con Docker
+docker-compose up -d postgres redis ollama
+
+# Iniciar el backend en modo desarrollo
+cd backend
+npm run dev
+cd ..
+
+# Iniciar el frontend en modo desarrollo
+npm run dev
 ```
 
 ### Credenciales por defecto

@@ -16,7 +16,9 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -33,16 +35,16 @@ const chatRoutes = require('./routes/chat');
 const audioRoutes = require('./routes/audio');
 const adminRoutes = require('./routes/admin');
 
-// Montar rutas
-app.use('/api/auth', authRoutes);
-app.use('/api/notebooks', notebooksRoutes);
-app.use('/api/sources', sourcesRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/audio', audioRoutes);
-app.use('/api/admin', adminRoutes);
+// Montar rutas - Eliminar el prefijo /api para que coincida con el frontend
+app.use('/auth', authRoutes);
+app.use('/notebooks', notebooksRoutes);
+app.use('/sources', sourcesRoutes);
+app.use('/chat', chatRoutes);
+app.use('/audio', audioRoutes);
+app.use('/admin', adminRoutes);
 
 // Ruta de estado
-app.get('/api/status', (req, res) => {
+app.get('/status', (req, res) => {
   res.json({ status: 'ok', version: '1.0.0' });
 });
 
