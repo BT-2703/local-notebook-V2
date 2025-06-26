@@ -12,8 +12,8 @@ RUN apk add --no-cache \
 # Copiar archivos de dependencias
 COPY package*.json ./
 
-# Instalar dependencias
-RUN npm install
+# Instalar dependencias usando npm ci para una instalación más robusta
+RUN npm ci
 
 # Copiar código fuente
 COPY . .
