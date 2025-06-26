@@ -1,7 +1,7 @@
-
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import axios from 'axios';
 
 export const useDocumentProcessing = () => {
   const { toast } = useToast();
@@ -18,20 +18,18 @@ export const useDocumentProcessing = () => {
     }) => {
       console.log('Initiating document processing for:', { sourceId, filePath, sourceType });
 
-      const { data, error } = await supabase.functions.invoke('process-document', {
-        body: {
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/sources/process`, {
           sourceId,
           filePath,
           sourceType
-        }
-      });
-
-      if (error) {
+        });
+        
+        return response.data;
+      } catch (error) {
         console.error('Document processing error:', error);
         throw error;
       }
-
-      return data;
     },
     onSuccess: (data) => {
       console.log('Document processing initiated successfully:', data);

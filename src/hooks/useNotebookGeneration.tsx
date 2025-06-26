@@ -1,7 +1,7 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import axios from 'axios';
 
 export const useNotebookGeneration = () => {
   const queryClient = useQueryClient();
@@ -15,20 +15,17 @@ export const useNotebookGeneration = () => {
     }) => {
       console.log('Starting notebook content generation for:', notebookId, 'with source type:', sourceType);
       
-      const { data, error } = await supabase.functions.invoke('generate-notebook-content', {
-        body: {
-          notebookId,
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/notebooks/${notebookId}/generate`, {
           filePath,
           sourceType
-        }
-      });
-
-      if (error) {
-        console.error('Edge function error:', error);
+        });
+        
+        return response.data;
+      } catch (error) {
+        console.error('Notebook generation error:', error);
         throw error;
       }
-
-      return data;
     },
     onSuccess: (data) => {
       console.log('Notebook generation successful:', data);

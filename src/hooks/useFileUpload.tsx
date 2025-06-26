@@ -1,7 +1,7 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import axios from 'axios';
 
 export const useFileUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -11,29 +11,27 @@ export const useFileUpload = () => {
     try {
       setIsUploading(true);
       
-      // Get file extension
-      const fileExtension = file.name.split('.').pop() || 'bin';
+      // Create FormData
+      const formData = new FormData();
+      formData.append('file', file);
       
-      // Create file path: sources/{notebook_id}/{source_id}.{extension}
-      const filePath = `${notebookId}/${sourceId}.${fileExtension}`;
+      // Upload file to API
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/sources/upload/${notebookId}/${sourceId}`, 
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
       
-      console.log('Uploading file to:', filePath);
-      
-      // Upload file to Supabase storage
-      const { data, error } = await supabase.storage
-        .from('sources')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (error) {
-        console.error('Upload error:', error);
-        throw error;
+      if (response.status !== 200) {
+        throw new Error('Upload failed');
       }
-
-      console.log('File uploaded successfully:', data);
-      return filePath;
+      
+      console.log('File uploaded successfully:', response.data);
+      return response.data.filePath;
     } catch (error) {
       console.error('File upload failed:', error);
       toast({
@@ -48,11 +46,7 @@ export const useFileUpload = () => {
   };
 
   const getFileUrl = (filePath: string): string => {
-    const { data } = supabase.storage
-      .from('sources')
-      .getPublicUrl(filePath);
-    
-    return data.publicUrl;
+    return `${import.meta.env.VITE_API_URL}/uploads/${filePath}`;
   };
 
   return {

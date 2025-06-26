@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import axios from 'axios';
 
 export interface Note {
   id: string;
@@ -23,14 +24,13 @@ export const useNotes = (notebookId?: string) => {
     queryFn: async () => {
       if (!notebookId) return [];
       
-      const { data, error } = await supabase
-        .from('notes')
-        .select('*')
-        .eq('notebook_id', notebookId)
-        .order('updated_at', { ascending: false });
-      
-      if (error) throw error;
-      return data as Note[];
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/notes/notebook/${notebookId}`);
+        return response.data as Note[];
+      } catch (error) {
+        console.error('Error fetching notes:', error);
+        throw error;
+      }
     },
     enabled: !!notebookId && !!user,
   });
@@ -49,20 +49,20 @@ export const useNotes = (notebookId?: string) => {
     }) => {
       if (!notebookId) throw new Error('Notebook ID is required');
       
-      const { data, error } = await supabase
-        .from('notes')
-        .insert([{
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/notes`, {
           notebook_id: notebookId,
           title,
           content,
           source_type,
           extracted_text,
-        }])
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
+        });
+        
+        return response.data;
+      } catch (error) {
+        console.error('Error creating note:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes', notebookId] });
@@ -71,15 +71,18 @@ export const useNotes = (notebookId?: string) => {
 
   const updateNoteMutation = useMutation({
     mutationFn: async ({ id, title, content }: { id: string; title: string; content: string }) => {
-      const { data, error } = await supabase
-        .from('notes')
-        .update({ title, content, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
+      try {
+        const response = await axios.put(`${import.meta.env.VITE_API_URL}/notes/${id}`, {
+          title,
+          content,
+          updated_at: new Date().toISOString()
+        });
+        
+        return response.data;
+      } catch (error) {
+        console.error('Error updating note:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes', notebookId] });
@@ -88,12 +91,13 @@ export const useNotes = (notebookId?: string) => {
 
   const deleteNoteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('notes')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
+      try {
+        await axios.delete(`${import.meta.env.VITE_API_URL}/notes/${id}`);
+        return id;
+      } catch (error) {
+        console.error('Error deleting note:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes', notebookId] });

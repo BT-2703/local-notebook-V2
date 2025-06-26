@@ -1,6 +1,6 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import axios from 'axios';
 
 export const useNotebookUpdate = () => {
   const queryClient = useQueryClient();
@@ -9,20 +9,13 @@ export const useNotebookUpdate = () => {
     mutationFn: async ({ id, updates }: { id: string; updates: { title?: string; description?: string } }) => {
       console.log('Updating notebook:', id, updates);
       
-      const { data, error } = await supabase
-        .from('notebooks')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) {
+      try {
+        const response = await axios.put(`${import.meta.env.VITE_API_URL}/notebooks/${id}`, updates);
+        return response.data;
+      } catch (error) {
         console.error('Error updating notebook:', error);
         throw error;
       }
-      
-      console.log('Notebook updated successfully:', data);
-      return data;
     },
     onSuccess: (data) => {
       console.log('Mutation success, invalidating queries');

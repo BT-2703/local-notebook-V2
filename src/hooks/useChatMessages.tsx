@@ -1,10 +1,10 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { EnhancedChatMessage, Citation, MessageSegment } from '@/types/message';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
+import axios from 'axios';
 
 // Type for the expected message structure from n8n_chat_histories
 interface N8nMessageFormat {
@@ -175,27 +175,25 @@ export const useChatMessages = (notebookId?: string) => {
     queryFn: async () => {
       if (!notebookId) return [];
       
-      const { data, error } = await supabase
-        .from('n8n_chat_histories')
-        .select('*')
-        .eq('session_id', notebookId)
-        .order('id', { ascending: true });
-
-      if (error) throw error;
-      
-      // Also fetch sources to get proper source titles
-      const { data: sourcesData } = await supabase
-        .from('sources')
-        .select('id, title, type')
-        .eq('notebook_id', notebookId);
-      
-      const sourceMap = new Map(sourcesData?.map(s => [s.id, s]) || []);
-      
-      console.log('Raw data from database:', data);
-      console.log('Sources map:', sourceMap);
-      
-      // Transform the data to match our expected format
-      return data.map((item) => transformMessage(item, sourceMap));
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/chat/history/${notebookId}`);
+        const data = response.data;
+        
+        // Also fetch sources to get proper source titles
+        const sourcesResponse = await axios.get(`${import.meta.env.VITE_API_URL}/sources/notebook/${notebookId}`);
+        const sourcesData = sourcesResponse.data;
+        
+        const sourceMap = new Map(sourcesData?.map(s => [s.id, s]) || []);
+        
+        console.log('Raw data from database:', data);
+        console.log('Sources map:', sourceMap);
+        
+        // Transform the data to match our expected format
+        return data.map((item) => transformMessage(item, sourceMap));
+      } catch (error) {
+        console.error('Error fetching chat messages:', error);
+        throw error;
+      }
     },
     enabled: !!notebookId && !!user,
     refetchOnMount: true,
@@ -208,51 +206,14 @@ export const useChatMessages = (notebookId?: string) => {
 
     console.log('Setting up Realtime subscription for notebook:', notebookId);
 
-    const channel = supabase
-      .channel('chat-messages')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'n8n_chat_histories',
-          filter: `session_id=eq.${notebookId}`
-        },
-        async (payload) => {
-          console.log('Realtime: New message received:', payload);
-          
-          // Fetch sources for proper transformation
-          const { data: sourcesData } = await supabase
-            .from('sources')
-            .select('id, title, type')
-            .eq('notebook_id', notebookId);
-          
-          const sourceMap = new Map(sourcesData?.map(s => [s.id, s]) || []);
-          
-          // Transform the new message
-          const newMessage = transformMessage(payload.new, sourceMap);
-          
-          // Update the query cache with the new message
-          queryClient.setQueryData(['chat-messages', notebookId], (oldMessages: EnhancedChatMessage[] = []) => {
-            // Check if message already exists to prevent duplicates
-            const messageExists = oldMessages.some(msg => msg.id === newMessage.id);
-            if (messageExists) {
-              console.log('Message already exists, skipping:', newMessage.id);
-              return oldMessages;
-            }
-            
-            console.log('Adding new message to cache:', newMessage);
-            return [...oldMessages, newMessage];
-          });
-        }
-      )
-      .subscribe((status) => {
-        console.log('Realtime subscription status:', status);
-      });
+    // Simulate realtime with polling
+    const interval = setInterval(async () => {
+      queryClient.invalidateQueries({ queryKey: ['chat-messages', notebookId] });
+    }, 5000);
 
     return () => {
-      console.log('Cleaning up Realtime subscription');
-      supabase.removeChannel(channel);
+      console.log('Cleaning up chat messages polling');
+      clearInterval(interval);
     };
   }, [notebookId, user, queryClient]);
 
@@ -264,24 +225,21 @@ export const useChatMessages = (notebookId?: string) => {
     }) => {
       if (!user) throw new Error('User not authenticated');
 
-      // Call the n8n webhook
-      const webhookResponse = await supabase.functions.invoke('send-chat-message', {
-        body: {
-          session_id: messageData.notebookId,
-          message: messageData.content,
-          user_id: user.id
-        }
-      });
+      try {
+        // Call the API endpoint
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/chat/send/${messageData.notebookId}`, {
+          message: messageData.content
+        });
 
-      if (webhookResponse.error) {
-        throw new Error(`Webhook error: ${webhookResponse.error.message}`);
+        return response.data;
+      } catch (error) {
+        console.error('Failed to send message:', error);
+        throw error;
       }
-
-      return webhookResponse.data;
     },
     onSuccess: () => {
-      // The response will appear via Realtime, so we don't need to do anything here
-      console.log('Message sent to webhook successfully');
+      // The response will appear via polling
+      console.log('Message sent successfully');
     },
   });
 
@@ -291,20 +249,15 @@ export const useChatMessages = (notebookId?: string) => {
 
       console.log('Deleting chat history for notebook:', notebookId);
       
-      const { error } = await supabase
-        .from('n8n_chat_histories')
-        .delete()
-        .eq('session_id', notebookId);
-
-      if (error) {
+      try {
+        const response = await axios.delete(`${import.meta.env.VITE_API_URL}/chat/history/${notebookId}`);
+        return response.data;
+      } catch (error) {
         console.error('Error deleting chat history:', error);
         throw error;
       }
-      
-      console.log('Chat history deleted successfully');
-      return notebookId;
     },
-    onSuccess: (notebookId) => {
+    onSuccess: (data, notebookId) => {
       console.log('Chat history cleared for notebook:', notebookId);
       toast({
         title: "Chat history cleared",

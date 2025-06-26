@@ -1,8 +1,8 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import axios from 'axios';
 
 export const useSourceUpdate = () => {
   const queryClient = useQueryClient();
@@ -13,22 +13,15 @@ export const useSourceUpdate = () => {
     mutationFn: async ({ sourceId, title }: { sourceId: string; title: string }) => {
       console.log('Updating source:', sourceId, 'with title:', title);
       
-      const { data, error } = await supabase
-        .from('sources')
-        .update({ title })
-        .eq('id', sourceId)
-        .select()
-        .single();
-
-      if (error) {
+      try {
+        const response = await axios.put(`${import.meta.env.VITE_API_URL}/sources/${sourceId}`, { title });
+        return response.data;
+      } catch (error) {
         console.error('Error updating source:', error);
         throw error;
       }
-      
-      console.log('Source updated successfully');
-      return data;
     },
-    onSuccess: () => {
+    onSuccess: (updatedSource) => {
       console.log('Update mutation success, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['sources'] });
       toast({

@@ -10,8 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const AuthForm = () => {
   // Estado para el formulario de inicio de sesión
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
+  const [loginEmail, setLoginEmail] = useState('admin@horuslm.local');
+  const [loginPassword, setLoginPassword] = useState('admin123');
   const [loginLoading, setLoginLoading] = useState(false);
   
   // Estado para el formulario de registro

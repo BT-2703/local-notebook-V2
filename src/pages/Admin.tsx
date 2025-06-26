@@ -12,6 +12,8 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Trash2, Plus, RefreshCw, Save, X, Check, Settings, Users, BarChart3, Database } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import Logo from '@/components/ui/Logo';
 
 // Tipos
 interface LLMConfig {
@@ -47,6 +49,7 @@ interface SystemStats {
 const Admin = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   
   // Estado para el formulario de configuración LLM
   const [editingConfig, setEditingConfig] = useState<LLMConfig | null>(null);
@@ -57,7 +60,7 @@ const Admin = () => {
   const { data: llmConfigs, isLoading: isLoadingConfigs } = useQuery({
     queryKey: ['llm-configs'],
     queryFn: async () => {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/llm-configs`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/admin/llm-configs`);
       return response.data as LLMConfig[];
     }
   });
@@ -66,7 +69,7 @@ const Admin = () => {
     queryKey: ['ollama-models'],
     queryFn: async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/ollama-models`);
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/admin/ollama-models`);
         return response.data as OllamaModel[];
       } catch (error) {
         console.error('Error al obtener modelos de Ollama:', error);
@@ -78,7 +81,7 @@ const Admin = () => {
   const { data: systemStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['system-stats'],
     queryFn: async () => {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/stats`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/admin/stats`);
       return response.data as SystemStats;
     }
   });
@@ -86,7 +89,7 @@ const Admin = () => {
   // Mutaciones
   const createLLMConfig = useMutation({
     mutationFn: async (config: Omit<LLMConfig, 'id' | 'created_at' | 'updated_at'>) => {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/llm-configs`, config);
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/admin/llm-configs`, config);
       return response.data;
     },
     onSuccess: () => {
@@ -108,7 +111,7 @@ const Admin = () => {
   
   const updateLLMConfig = useMutation({
     mutationFn: async (config: Partial<LLMConfig> & { id: string }) => {
-      const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/llm-configs/${config.id}`, config);
+      const response = await axios.put(`${import.meta.env.VITE_API_URL}/admin/llm-configs/${config.id}`, config);
       return response.data;
     },
     onSuccess: () => {
@@ -130,7 +133,7 @@ const Admin = () => {
   
   const deleteLLMConfig = useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/llm-configs/${id}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL}/admin/llm-configs/${id}`);
       return id;
     },
     onSuccess: () => {
