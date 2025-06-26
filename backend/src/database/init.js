@@ -3,8 +3,9 @@ const fs = require('fs').promises;
 const path = require('path');
 const logger = require('../utils/logger');
 
+// Create a new pool with explicit password
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres123@localhost:5432/horuslm',
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
@@ -38,6 +39,17 @@ async function runMigrations(client) {
 
     // Leer archivos de migración
     const migrationsDir = path.join(__dirname, 'migrations');
+    
+    // Verificar si el directorio existe
+    try {
+      await fs.access(migrationsDir);
+    } catch (err) {
+      logger.info('Directorio de migraciones no encontrado, creando...');
+      await fs.mkdir(migrationsDir, { recursive: true });
+      logger.info('Directorio de migraciones creado');
+      return; // No hay migraciones para ejecutar
+    }
+    
     const migrationFiles = await fs.readdir(migrationsDir);
     
     for (const file of migrationFiles.sort()) {

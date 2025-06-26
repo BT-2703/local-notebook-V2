@@ -6,9 +6,20 @@ const dotenv = require('dotenv');
 const path = require('path');
 const { initializeDatabase } = require('./database/init');
 const logger = require('./utils/logger');
+const fs = require('fs');
 
 // Cargar variables de entorno
 dotenv.config();
+
+// Crear directorios necesarios si no existen
+const dirs = ['uploads', 'audio', 'logs'];
+dirs.forEach(dir => {
+  const dirPath = path.join(__dirname, '..', dir);
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+    logger.info(`Directorio creado: ${dirPath}`);
+  }
+});
 
 // Inicializar Express
 const app = express();
