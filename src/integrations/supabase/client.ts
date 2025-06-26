@@ -136,6 +136,9 @@ export const supabase = {
         },
         list: async () => {
           return { data: [], error: null };
+        },
+        createSignedUrl: async () => {
+          return { data: { signedUrl: '' }, error: null };
         }
       };
     }
