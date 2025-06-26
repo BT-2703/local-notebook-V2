@@ -29,7 +29,7 @@ export const supabase = {
   auth: {
     signInWithPassword: async ({ email, password }: { email: string; password: string }) => {
       try {
-        const response = await apiClient.post('/api/auth/login', { email, password });
+        const response = await apiClient.post('/auth/login', { email, password });
         return { data: response.data, error: null };
       } catch (error: any) {
         return { data: null, error: error.response?.data || error };
@@ -46,7 +46,7 @@ export const supabase = {
       }
       
       try {
-        const response = await apiClient.get('/api/auth/me');
+        const response = await apiClient.get('/auth/me');
         return { 
           data: { 
             session: { 
@@ -141,10 +141,28 @@ export const supabase = {
     }
   },
   functions: {
-    invoke: async () => {
-      return { data: {}, error: null };
+    invoke: async (functionName: string, { body }: { body: any }) => {
+      try {
+        const response = await apiClient.post(`/functions/${functionName}`, body);
+        return { data: response.data, error: null };
+      } catch (error: any) {
+        return { data: null, error: error.response?.data || error };
+      }
     }
-  }
+  },
+  channel: (name: string) => {
+    return {
+      on: () => {
+        return {
+          subscribe: (callback?: (status: string) => void) => {
+            if (callback) callback('SUBSCRIBED');
+            return {};
+          }
+        };
+      }
+    };
+  },
+  removeChannel: () => {}
 };
 
 export default apiClient;

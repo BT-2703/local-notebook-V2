@@ -82,7 +82,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
 
         // Obtener información del usuario
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/me`);
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/auth/me`);
         setUser(response.data);
         setError(null);
       } catch (err) {
@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setLoading(true);
       setError(null);
       
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, {
         email,
         password
       });
@@ -130,7 +130,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setLoading(true);
       setError(null);
       
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/register`, {
         email,
         password,
         fullName

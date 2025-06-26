@@ -22,7 +22,7 @@ export const useNotebooks = () => {
       
       console.log('Obteniendo cuadernos para usuario:', user.id);
       
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/notebooks`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/notebooks`);
       return response.data;
     },
     enabled: isAuthenticated && !authLoading,
@@ -39,7 +39,7 @@ export const useNotebooks = () => {
     mutationFn: async (notebookData: { title: string; description?: string }) => {
       console.log('Creando cuaderno con datos:', notebookData);
       
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/notebooks`, notebookData);
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/notebooks`, notebookData);
       return response.data;
     },
     onSuccess: (data) => {

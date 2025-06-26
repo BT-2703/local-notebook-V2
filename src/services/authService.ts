@@ -1,10 +1,9 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
 export const useLogout = () => {
-  const { signOut } = useAuth();
+  const { logout: signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 

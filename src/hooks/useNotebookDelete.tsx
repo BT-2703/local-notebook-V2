@@ -12,7 +12,7 @@ export const useNotebookDelete = () => {
     mutationFn: async (notebookId: string) => {
       console.log('Iniciando proceso de eliminación de cuaderno para:', notebookId);
       
-      const response = await axios.delete(`${import.meta.env.VITE_API_URL}/api/notebooks/${notebookId}`);
+      const response = await axios.delete(`${import.meta.env.VITE_API_URL}/notebooks/${notebookId}`);
       return response.data;
     },
     onSuccess: (data, notebookId) => {
